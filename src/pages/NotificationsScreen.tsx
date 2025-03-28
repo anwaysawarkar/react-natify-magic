@@ -2,72 +2,60 @@
 import { useState } from "react";
 import BottomNavigation from "@/components/layout/BottomNavigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { AlertTriangle, MapPin, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import PullToRefresh from "@/components/ui/PullToRefresh";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-interface Notification {
+interface Alert {
   id: number;
-  type: "follow" | "like" | "comment" | "mention";
-  user: {
-    name: string;
-    avatar: string;
-    username: string;
-  };
-  content: string;
-  time: string;
+  animalType: string; 
+  location: string;
+  timestamp: Date;
+  message?: string;
+  verified: boolean;
   read: boolean;
 }
 
 const NotificationsScreen = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
+  const { userRole } = useAuth();
+  const navigate = useNavigate();
+  const [alerts, setAlerts] = useState<Alert[]>([
     {
       id: 1,
-      type: "follow",
-      user: {
-        name: "Jordan Smith",
-        avatar: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-        username: "jordansmith"
-      },
-      content: "started following you",
-      time: "2m ago",
+      animalType: "Tiger",
+      location: "Core Zone Section A",
+      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      message: "Large tiger spotted moving south. Stay indoors and secure livestock.",
+      verified: true,
       read: false
     },
     {
       id: 2,
-      type: "like",
-      user: {
-        name: "Taylor Wilson",
-        avatar: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-        username: "taylorwilson"
-      },
-      content: "liked your post 'Creating responsive layouts'",
-      time: "1h ago",
+      animalType: "Elephant",
+      location: "Core Zone Section B",
+      timestamp: new Date(Date.now() - 1000 * 60 * 120), // 2 hours ago
+      message: "Herd of elephants near eastern village boundary.",
+      verified: true,
       read: false
     },
     {
       id: 3,
-      type: "comment",
-      user: {
-        name: "Alex Johnson",
-        avatar: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6",
-        username: "alexjohnson"
-      },
-      content: "commented: 'This is such a helpful guide!'",
-      time: "3h ago",
+      animalType: "Leopard",
+      location: "Core Zone Section C",
+      timestamp: new Date(Date.now() - 1000 * 60 * 240), // 4 hours ago
+      message: "Leopard spotted near water source. Avoid area until further notice.",
+      verified: true,
       read: true
     },
     {
       id: 4,
-      type: "mention",
-      user: {
-        name: "Jamie Lee",
-        avatar: "https://images.unsplash.com/photo-1518770660439-4636190af475",
-        username: "jamielee"
-      },
-      content: "mentioned you in a comment: '@user check this out!'",
-      time: "5h ago",
+      animalType: "Wild Boar",
+      location: "Core Zone Section D",
+      timestamp: new Date(Date.now() - 1000 * 60 * 300), // 5 hours ago
+      verified: false,
       read: true
     }
   ]);
@@ -75,25 +63,33 @@ const NotificationsScreen = () => {
   const handleRefresh = async () => {
     // Simulate API refresh
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Mark all as read
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
   
   const markAsRead = (id: number) => {
-    setNotifications(
-      notifications.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
+    setAlerts(
+      alerts.map(alert =>
+        alert.id === id ? { ...alert, read: true } : alert
       )
     );
   };
+  
+  const markAllAsRead = () => {
+    setAlerts(alerts.map(alert => ({ ...alert, read: true })));
+  };
+  
+  // For users, only show verified alerts
+  const filteredAlerts = userRole === "user" 
+    ? alerts.filter(alert => alert.verified)
+    : alerts;
   
   return (
     <div className="pb-20 min-h-screen bg-background">
       <header className="bg-background sticky top-0 z-10 border-b border-border">
         <div className="p-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Notifications</h1>
-          <Button variant="ghost" size="sm">Mark all as read</Button>
+          <h1 className="text-xl font-bold">
+            {userRole === "admin" ? "Alert Management" : "Alerts"}
+          </h1>
+          <Button variant="ghost" size="sm" onClick={markAllAsRead}>Mark all as read</Button>
         </div>
       </header>
 
@@ -102,84 +98,168 @@ const NotificationsScreen = () => {
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="w-full mb-2 px-4">
               <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
-              <TabsTrigger value="mentions" className="flex-1">Mentions</TabsTrigger>
+              <TabsTrigger value="unread" className="flex-1">Unread</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all">
-              <div className="divide-y divide-border">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={cn(
-                      "p-4 flex items-start gap-3",
-                      !notification.read && "bg-muted/30"
-                    )}
-                    onClick={() => markAsRead(notification.id)}
-                  >
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <img src={notification.user.avatar} alt={notification.user.name} />
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-semibold">{notification.user.name}</span>{" "}
-                        {notification.content}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {notification.time}
-                      </p>
-                    </div>
-                    
-                    {!notification.read && (
-                      <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-                    )}
+              <div className="mobile-container py-2">
+                {filteredAlerts.length === 0 ? (
+                  <div className="text-center py-20 text-muted-foreground">
+                    <p>No alerts to display</p>
                   </div>
-                ))}
-                
-                {notifications.length === 0 && (
-                  <div className="py-20 text-center">
-                    <p className="text-muted-foreground">No notifications yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredAlerts.map((alert) => (
+                      <div
+                        key={alert.id}
+                        className={cn(
+                          "p-4 border rounded-lg",
+                          !alert.read && "bg-muted/30 border-primary/50",
+                          !alert.verified && "border-amber-200 bg-amber-50/30"
+                        )}
+                        onClick={() => {
+                          markAsRead(alert.id);
+                          navigate('/wildlife-map');
+                        }}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center">
+                            <AlertTriangle className={`h-5 w-5 mr-2 ${alert.verified ? 'text-destructive' : 'text-amber-500'}`} />
+                            <span className="font-medium">{alert.animalType}</span>
+                            {!alert.verified && userRole === "admin" && (
+                              <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                                Unverified
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {alert.timestamp.toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          <span>{alert.location}</span>
+                        </div>
+                        
+                        {alert.message && (
+                          <div className="mt-2 text-sm border-l-2 pl-2 border-muted">
+                            {alert.message}
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between mt-3">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/wildlife-map');
+                            }}
+                          >
+                            <MapPin className="mr-1 h-4 w-4" /> View on Map
+                          </Button>
+                          
+                          {!alert.read && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(alert.id);
+                              }}
+                            >
+                              <CheckCircle className="mr-1 h-4 w-4" /> Mark as Read
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {!alert.read && (
+                          <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </TabsContent>
             
-            <TabsContent value="mentions">
-              <div className="divide-y divide-border">
-                {notifications
-                  .filter(n => n.type === "mention")
-                  .map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={cn(
-                        "p-4 flex items-start gap-3",
-                        !notification.read && "bg-muted/30"
-                      )}
-                      onClick={() => markAsRead(notification.id)}
-                    >
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <img src={notification.user.avatar} alt={notification.user.name} />
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-semibold">{notification.user.name}</span>{" "}
-                          {notification.content}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {notification.time}
-                        </p>
-                      </div>
-                      
-                      {!notification.read && (
-                        <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-                      )}
-                    </div>
-                  ))}
-                
-                {notifications.filter(n => n.type === "mention").length === 0 && (
-                  <div className="py-20 text-center">
-                    <p className="text-muted-foreground">No mentions yet</p>
+            <TabsContent value="unread">
+              <div className="mobile-container py-2">
+                {filteredAlerts.filter(a => !a.read).length === 0 ? (
+                  <div className="text-center py-20 text-muted-foreground">
+                    <p>No unread alerts</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredAlerts
+                      .filter(a => !a.read)
+                      .map((alert) => (
+                        <div
+                          key={alert.id}
+                          className={cn(
+                            "p-4 border rounded-lg",
+                            "bg-muted/30 border-primary/50",
+                            !alert.verified && "border-amber-200 bg-amber-50/30"
+                          )}
+                          onClick={() => {
+                            markAsRead(alert.id);
+                            navigate('/wildlife-map');
+                          }}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center">
+                              <AlertTriangle className={`h-5 w-5 mr-2 ${alert.verified ? 'text-destructive' : 'text-amber-500'}`} />
+                              <span className="font-medium">{alert.animalType}</span>
+                              {!alert.verified && userRole === "admin" && (
+                                <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                                  Unverified
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {alert.timestamp.toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            <span>{alert.location}</span>
+                          </div>
+                          
+                          {alert.message && (
+                            <div className="mt-2 text-sm border-l-2 pl-2 border-muted">
+                              {alert.message}
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between mt-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/wildlife-map');
+                              }}
+                            >
+                              <MapPin className="mr-1 h-4 w-4" /> View on Map
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(alert.id);
+                              }}
+                            >
+                              <CheckCircle className="mr-1 h-4 w-4" /> Mark as Read
+                            </Button>
+                          </div>
+                          
+                          <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>

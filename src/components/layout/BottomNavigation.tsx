@@ -1,24 +1,54 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, Camera, MapPin, Bell, User } from "lucide-react";
+import { Home, Camera, MapPin, Bell, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const BottomNavigation = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<string>("/");
+  const { userRole, logout } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     setActiveTab(location.pathname);
   }, [location]);
 
-  const navItems = [
-    { icon: Home, label: "Home", path: "/" },
-    { icon: Camera, label: "Cameras", path: "/camera-feed" },
-    { icon: MapPin, label: "Map", path: "/wildlife-map" },
-    { icon: Bell, label: "Alerts", path: "/notifications" },
-    { icon: User, label: "Profile", path: "/profile" },
-  ];
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully",
+    });
+  };
+
+  // Define navigation items based on user role
+  const getNavItems = () => {
+    const baseItems = [
+      { icon: Home, label: "Home", path: "/" },
+      { icon: Bell, label: "Alerts", path: "/notifications" },
+      { icon: MapPin, label: "Map", path: "/wildlife-map" },
+      { icon: User, label: "Profile", path: "/profile" },
+    ];
+
+    // Admin-specific items
+    if (userRole === "admin") {
+      return [
+        baseItems[0],
+        { icon: Camera, label: "Cameras", path: "/camera-feed" },
+        baseItems[1],
+        baseItems[2],
+        baseItems[3],
+      ];
+    }
+
+    // Regular user items (remove camera)
+    return baseItems;
+  };
+
+  const navItems = getNavItems();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
