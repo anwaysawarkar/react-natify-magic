@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import ProfilePage from "./pages/ProfilePage";
 import ExploreScreen from "./pages/ExploreScreen";
 import NotificationsScreen from "./pages/NotificationsScreen";
+import CameraFeedPage from "./pages/CameraFeedPage";
+import WildlifeMapPage from "./pages/WildlifeMapPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ const App = () => (
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/explore" element={<ExploreScreen />} />
           <Route path="/notifications" element={<NotificationsScreen />} />
+          <Route path="/camera-feed" element={<CameraFeedPage />} />
+          <Route path="/wildlife-map" element={<WildlifeMapPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

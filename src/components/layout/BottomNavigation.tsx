@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, Bell, User } from "lucide-react";
+import { Home, Search, Camera, MapPin, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BottomNavigation = () => {
@@ -14,8 +14,9 @@ const BottomNavigation = () => {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
-    { icon: Search, label: "Explore", path: "/explore" },
-    { icon: Bell, label: "Notifications", path: "/notifications" },
+    { icon: Camera, label: "Cameras", path: "/camera-feed" },
+    { icon: MapPin, label: "Map", path: "/wildlife-map" },
+    { icon: Bell, label: "Alerts", path: "/notifications" },
     { icon: User, label: "Profile", path: "/profile" },
   ];
 
